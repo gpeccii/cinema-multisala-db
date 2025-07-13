@@ -3,13 +3,109 @@ from sqlalchemy import and_, or_, func, text
 from typing import List, Optional, Dict, Any
 from datetime import date, time, datetime
 import logging
-
 from models import *
-from database import db_manager
-
+from database import db_manager, reset_database
 logger = logging.getLogger(__name__)
 
 class CinemaOperations:
+	def create_promozione(self, nome: str, tipo_promozione_id: int, percentuale_sconto: float, data_inizio, data_fine) -> int:
+		with self.db.get_session() as session:
+			promozione = Promozione(
+				Nome=nome,
+				ID_Tipo_Promozione=tipo_promozione_id,
+				Percentuale_Sconto=percentuale_sconto,
+				Data_Inizio=data_inizio,
+				Data_Fine=data_fine
+			)
+			session.add(promozione)
+			session.flush()
+			return promozione.ID_Promozione
+
+	# ======== VISUALIZZA TUTTI ========
+	def get_all_clienti(self):
+		with self.db.get_session() as session:
+			clienti = session.query(Cliente).all()
+			return [
+				{
+					'ID_Cliente': c.ID_Cliente,
+					'Nome': c.Nome,
+					'Cognome': c.Cognome,
+					'Email': c.Email,
+					'Telefono': c.Telefono,
+					'Data_Nascita': c.Data_Nascita
+				}
+				for c in clienti
+			]
+
+	def get_all_film(self):
+		with self.db.get_session() as session:
+			films = session.query(Film).all()
+			return [
+				{
+					'ID_Film': f.ID_Film,
+					'Titolo': f.Titolo,
+					'Durata': f.Durata,
+					'Genere': f.Genere,
+					'Classificazione': f.Classificazione,
+					'Anno_Uscita': f.Anno_Uscita,
+					'ID_Regista': f.ID_Regista
+				}
+				for f in films
+			]
+
+	def get_all_proiezioni(self):
+		with self.db.get_session() as session:
+			query = """
+			SELECT p.ID_Proiezione, f.Titolo, s.Numero AS Sala, p.Data, p.Ora_Inizio, p.Ora_Fine, t.Prezzo_Base
+			FROM PROIEZIONE p
+			JOIN FILM f ON p.ID_Film = f.ID_Film
+			JOIN SALA s ON p.ID_Sala = s.ID_Sala
+			JOIN TARIFFA t ON p.ID_Tariffa = t.ID_Tariffa
+			ORDER BY p.Data DESC, p.Ora_Inizio
+			"""
+			result = session.execute(text(query))
+			return [dict(row._mapping) for row in result]
+
+	def get_all_sale(self):
+		with self.db.get_session() as session:
+			sale = session.query(Sala).all()
+			return [
+				{
+					'ID_Sala': s.ID_Sala,
+					'Numero': s.Numero,
+					'Capienza': s.Capienza,
+					'Stato': s.Stato
+				}
+				for s in sale
+			]
+
+	def get_all_operatori(self):
+		with self.db.get_session() as session:
+			operatori = session.query(Operatore).all()
+			return [
+				{
+					'ID_Operatore': o.ID_Operatore,
+					'Nome': o.Nome,
+					'Cognome': o.Cognome,
+					'Username': o.Username,
+					'Ruolo': o.Ruolo
+				}
+				for o in operatori
+			]
+
+	def get_all_tariffe(self):
+		with self.db.get_session() as session:
+			tariffe = session.query(Tariffa).all()
+			return [
+				{
+					'ID_Tariffa': t.ID_Tariffa,
+					'Nome_Tariffa': t.Nome_Tariffa,
+					'Prezzo_Base': float(t.Prezzo_Base),
+					'Fascia_Oraria': t.Fascia_Oraria,
+					'Giorno_Settimana': t.Giorno_Settimana
+				}
+				for t in tariffe
+			]
 
 	def __init__(self):
 		self.db = db_manager
@@ -17,7 +113,7 @@ class CinemaOperations:
 	# ========== OPERAZIONI CLIENTE ==========
 
 	def create_cliente(self, nome: str, cognome: str, email: str,
-					  telefono: str = None, data_nascita: date = None) -> Cliente:
+					  telefono: str = None, data_nascita: date = None) -> int:
 		with self.db.get_session() as session:
 			cliente = Cliente(
 				Nome=nome,
@@ -28,16 +124,37 @@ class CinemaOperations:
 			)
 			session.add(cliente)
 			session.flush()
-			session.refresh(cliente)
-			return cliente
+			return cliente.ID_Cliente
 
-	def get_cliente_by_email(self, email: str) -> Optional[Cliente]:
+	def get_cliente_by_email(self, email: str) -> Optional[Dict]:
 		with self.db.get_session() as session:
-			return session.query(Cliente).filter(Cliente.Email == email).first()
+			cliente = session.query(Cliente).filter(Cliente.Email == email).first()
+			if cliente:
+				return {
+					'ID_Cliente': cliente.ID_Cliente,
+					'Nome': cliente.Nome,
+					'Cognome': cliente.Cognome,
+					'Email': cliente.Email,
+					'Telefono': cliente.Telefono,
+					'Data_Nascita': cliente.Data_Nascita,
+					'Data_Registrazione': cliente.Data_Registrazione
+				}
+			return None
 
-	def get_cliente_by_id(self, cliente_id: int) -> Optional[Cliente]:
+	def get_cliente_by_id(self, cliente_id: int) -> Optional[Dict]:
 		with self.db.get_session() as session:
-			return session.query(Cliente).filter(Cliente.ID_Cliente == cliente_id).first()
+			cliente = session.query(Cliente).filter(Cliente.ID_Cliente == cliente_id).first()
+			if cliente:
+				return {
+					'ID_Cliente': cliente.ID_Cliente,
+					'Nome': cliente.Nome,
+					'Cognome': cliente.Cognome,
+					'Email': cliente.Email,
+					'Telefono': cliente.Telefono,
+					'Data_Nascita': cliente.Data_Nascita,
+					'Data_Registrazione': cliente.Data_Registrazione
+				}
+			return None
 
 	def update_cliente(self, cliente_id: int, **kwargs) -> bool:
 		with self.db.get_session() as session:
@@ -52,10 +169,87 @@ class CinemaOperations:
 				return True
 			return False
 
+	# ========== OPERAZIONI SALA ==========
+	def create_sala(self, numero: int, capienza: int, stato: str) -> int:
+		with self.db.get_session() as session:
+			sala = Sala(
+				Numero=numero,
+				Capienza=capienza,
+				Stato=stato
+			)
+			session.add(sala)
+			session.flush()
+			return sala.ID_Sala
+
+	def create_posto(self, sala_id: int, fila: str, numero_posto: int) -> int:
+		with self.db.get_session() as session:
+			posto = Posto(
+				ID_Sala=sala_id,
+				Fila=fila,
+				Numero_Posto=numero_posto,
+				Stato_Posto='Disponibile'
+			)
+			session.add(posto)
+			session.flush()
+			return posto.ID_Posto
+
+	def create_tecnologia(self, nome_tecnologia: str, descrizione: str) -> int:
+		with self.db.get_session() as session:
+			tecnologia = TipoTecnologia(
+				Nome_Tecnologia=nome_tecnologia,
+				Descrizione_Tecnologia=descrizione
+			)
+			session.add(tecnologia)
+			session.flush()
+			return tecnologia.ID_Tecnologia
+
+	def add_tecnologia_to_sala(self, sala_id: int, tecnologia_id: int) -> int:
+		with self.db.get_session() as session:
+			supporta = Supporta(
+				ID_Sala=sala_id,
+				ID_Tecnologia=tecnologia_id
+			)
+			session.add(supporta)
+			session.flush()
+			return getattr(supporta, 'ID_Supporta', None)
+
+	def create_tariffa(self, nome_tariffa: str, prezzo_base: float) -> int:
+		with self.db.get_session() as session:
+			tariffa = Tariffa(
+				Nome_Tariffa=nome_tariffa,
+				Prezzo_Base=prezzo_base
+			)
+			session.add(tariffa)
+			session.flush()
+			return tariffa.ID_Tariffa
+
+	def create_operatore(self, nome: str, cognome: str, ruolo: str) -> int:
+		with self.db.get_session() as session:
+			operatore = Operatore(
+				Nome=nome,
+				Cognome=cognome,
+				Username=f"{nome.lower()}.{cognome.lower()}",
+				Password="password",
+				Ruolo=ruolo
+			)
+			session.add(operatore)
+			session.flush()
+			return operatore.ID_Operatore
+
+	def create_tipo_promozione(self, nome_tipo: str, descrizione_tipo: str) -> int:
+		with self.db.get_session() as session:
+			tipo = TipoPromozione(
+				Nome_Tipo=nome_tipo,
+				Descrizione_Tipo=descrizione_tipo
+			)
+			session.add(tipo)
+			session.flush()
+			return tipo.ID_Tipo_Promozione
+
 	# ========== OPERAZIONI FILM ==========
 
 	def create_film(self, titolo: str, durata: int, genere: str,
-				   classificazione: str, anno_uscita: int, regista_id: int) -> Film:
+				   classificazione: str, anno_uscita: int, regista_id: int) -> int:
 		with self.db.get_session() as session:
 			film = Film(
 				Titolo=titolo,
@@ -67,23 +261,47 @@ class CinemaOperations:
 			)
 			session.add(film)
 			session.flush()
-			session.refresh(film)
-			return film
+			film_id = film.ID_Film
+			return film_id
 
-	def get_film_by_genere(self, genere: str) -> List[Film]:
+	def get_film_by_genere(self, genere: str) -> List[Dict]:
 		with self.db.get_session() as session:
-			return session.query(Film).filter(Film.Genere == genere).all()
+			films = session.query(Film).filter(Film.Genere == genere).all()
+			return [
+				{
+					'ID_Film': f.ID_Film,
+					'Titolo': f.Titolo,
+					'Durata': f.Durata,
+					'Genere': f.Genere,
+					'Classificazione': f.Classificazione,
+					'Anno_Uscita': f.Anno_Uscita,
+					'ID_Regista': f.ID_Regista
+				}
+				for f in films
+			]
 
-	def search_film(self, search_term: str) -> List[Film]:
+	def search_film(self, search_term: str) -> List[Dict]:
 		with self.db.get_session() as session:
-			return session.query(Film).filter(
+			films = session.query(Film).filter(
 				Film.Titolo.like(f'%{search_term}%')
 			).all()
+			return [
+				{
+					'ID_Film': f.ID_Film,
+					'Titolo': f.Titolo,
+					'Durata': f.Durata,
+					'Genere': f.Genere,
+					'Classificazione': f.Classificazione,
+					'Anno_Uscita': f.Anno_Uscita,
+					'ID_Regista': f.ID_Regista
+				}
+				for f in films
+			]
 
 	# ========== OPERAZIONI PROIEZIONI ==========
 
 	def create_proiezione(self, data: date, ora_inizio: time, ora_fine: time,
-						 film_id: int, sala_id: int, operatore_id: int, tariffa_id: int) -> Proiezione:
+						 film_id: int, sala_id: int, operatore_id: int, tariffa_id: int) -> int:
 		with self.db.get_session() as session:
 			if self._check_sala_overlap(session, sala_id, data, ora_inizio, ora_fine):
 				raise ValueError("Sovrapposizione con altre proiezioni nella stessa sala")
@@ -99,8 +317,8 @@ class CinemaOperations:
 			)
 			session.add(proiezione)
 			session.flush()
-			session.refresh(proiezione)
-			return proiezione
+			proiezione_id = proiezione.ID_Proiezione
+			return proiezione_id
 
 	def get_proiezioni_by_data(self, data: date) -> List[Dict]:
 		with self.db.get_session() as session:
@@ -143,7 +361,7 @@ class CinemaOperations:
 	# ========== OPERAZIONI BIGLIETTI ==========
 
 	def create_biglietto(self, proiezione_id: int, cliente_id: int, posto_id: int,
-						promozione_id: int = None) -> Biglietto:
+						promozione_id: int = None) -> Dict:
 		with self.db.get_session() as session:
 			if self._check_posto_occupied(session, proiezione_id, posto_id):
 				raise ValueError("Posto già occupato per questa proiezione")
@@ -160,7 +378,14 @@ class CinemaOperations:
 			session.add(biglietto)
 			session.flush()
 			session.refresh(biglietto)
-			return biglietto
+
+			# Restituisce un dizionario invece dell'oggetto per evitare problemi di sessione
+			return {
+				'ID_Biglietto': biglietto.ID_Biglietto,
+				'Prezzo_Applicato': float(biglietto.Prezzo_Applicato),
+				'Stato': biglietto.Stato,
+				'Data_Emissione': biglietto.Data_Emissione
+			}
 
 	def get_posti_disponibili(self, proiezione_id: int) -> List[Dict]:
 		with self.db.get_session() as session:
@@ -241,7 +466,7 @@ class CinemaOperations:
 
 	# ========== OPERAZIONI RECENSIONI ==========
 
-	def create_recensione(self, valutazione: int, commento: str, cliente_id: int, film_id: int) -> Recensione:
+	def create_recensione(self, valutazione: int, commento: str, cliente_id: int, film_id: int) -> int:
 		with self.db.get_session() as session:
 			existing = session.query(Recensione).filter(
 				and_(Recensione.ID_Cliente == cliente_id, Recensione.ID_Film == film_id)
@@ -258,8 +483,7 @@ class CinemaOperations:
 			)
 			session.add(recensione)
 			session.flush()
-			session.refresh(recensione)
-			return recensione
+			return recensione.ID_Recensione
 
 	def get_recensioni_film(self, film_id: int) -> Dict:
 		with self.db.get_session() as session:
@@ -319,3 +543,18 @@ class CinemaOperations:
 			"""
 			result = session.execute(text(query), {'limit': limit})
 			return [dict(row._mapping) for row in result]
+
+	def create_regista(self, nome: str, cognome: str, nazionalita: str, data_nascita: str) -> int:
+		with self.db.get_session() as session:
+			regista = Regista(
+				Nome_Regista=nome,
+				Cognome_Regista=cognome,
+				Nazionalita=nazionalita,
+				Data_Nascita=data_nascita
+			)
+			session.add(regista)
+			session.flush()
+			regista_id = regista.ID_Regista
+			return regista_id
+
+ops = CinemaOperations()
