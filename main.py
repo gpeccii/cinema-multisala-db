@@ -1,4 +1,29 @@
 import os
+from dotenv import load_dotenv
+import pymysql
+
+# Carica variabili da .env
+load_dotenv()
+
+def ensure_database_exists():
+    try:
+        conn = pymysql.connect(
+            host=os.getenv("DB_HOST"),
+            user=os.getenv("DB_USER"),
+            password=os.getenv("DB_PASSWORD"),
+            port=int(os.getenv("DB_PORT", 3306)),
+            autocommit=True
+        )
+        with conn.cursor() as cursor:
+            cursor.execute(f"CREATE DATABASE IF NOT EXISTS `{os.getenv('DB_NAME')}` DEFAULT CHARACTER SET utf8mb4;")
+        conn.close()
+    except Exception as e:
+        print(f"❌ Errore nella creazione del database: {e}")
+        exit(1)
+
+ensure_database_exists()
+
+import os
 import sys
 from datetime import date, time, datetime
 from tabulate import tabulate
@@ -29,7 +54,6 @@ class CinemaApp:
         print(f"{'='*60}\n")
 
         try:
-            # Inizializza database
             init_database()
             self.main_menu()
         except Exception as e:
