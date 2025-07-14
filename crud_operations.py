@@ -298,6 +298,14 @@ class CinemaOperations:
 				for f in films
 			]
 
+	def delete_film(self, film_id: int) -> bool:
+		with self.db.get_session() as session:
+			film = session.query(Film).filter(Film.ID_Film == film_id).first()
+			if film:
+				session.delete(film)
+				return True
+			return False
+
 	# ========== OPERAZIONI PROIEZIONI ==========
 
 	def create_proiezione(self, data: date, ora_inizio: time, ora_fine: time,
@@ -338,6 +346,14 @@ class CinemaOperations:
 			"""
 			result = session.execute(text(query), {'data': data})
 			return [dict(row._mapping) for row in result]
+
+	def delete_proiezione(self, proiezione_id: int) -> bool:
+		with self.db.get_session() as session:
+			proiezione = session.query(Proiezione).filter(Proiezione.ID_Proiezione == proiezione_id).first()
+			if proiezione:
+				session.delete(proiezione)
+				return True
+			return False
 
 	def _check_sala_overlap(self, session: Session, sala_id: int, data: date,
 						   ora_inizio: time, ora_fine: time, proiezione_id: int = None) -> bool:
@@ -556,5 +572,27 @@ class CinemaOperations:
 			session.flush()
 			regista_id = regista.ID_Regista
 			return regista_id
+
+	def delete_promozione(self, promozione_id: int) -> bool:
+		with self.db.get_session() as session:
+			promo = session.query(Promozione).filter(Promozione.ID_Promozione == promozione_id).first()
+			if promo:
+				session.delete(promo)
+				return True
+			return False
+
+	def get_all_promozioni(self):
+		with self.db.get_session() as session:
+			promozioni = session.query(Promozione).all()
+			return [
+				{
+					'ID_Promozione': p.ID_Promozione,
+					'Nome': p.Nome,
+					'Percentuale_Sconto': float(p.Percentuale_Sconto),
+					'Data_Inizio': p.Data_Inizio,
+					'Data_Fine': p.Data_Fine
+				}
+				for p in promozioni
+			]
 
 ops = CinemaOperations()

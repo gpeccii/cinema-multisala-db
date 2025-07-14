@@ -389,18 +389,19 @@ class CinemaApp:
 
 	def main_menu(self):
 		while True:
-			print("\n🎬 MENU PRINCIPALE")
+			print("\n🎦 MENU PRINCIPALE")
 			print("-" * 30)
 			print("1. 👤 Gestione Clienti")
-			print("2. 🎭 Gestione Film")
-			print("3. 🎪 Gestione Proiezioni")
-			print("4. 🎫 Gestione Biglietti")
+			print("2. 🎬 Gestione Film")
+			print("3. 🎞️  Gestione Proiezioni")
+			print("4. 🎟️  Gestione Biglietti")
 			print("5. ⭐ Gestione Recensioni")
-			print("6. 📊 Reports")
-			print("7. ⚙️  Amministrazione")
-			print("8. 🚪 Esci")
+			print("6. 🏷️  Gestione Promozioni")
+			print("7. 📊 Reports")
+			print("8. ⚙️  Amministrazione")
+			print("9. 🚪 Esci")
 
-			choice = input("\nScegli un'opzione (1-8): ").strip()
+			choice = input("\nScegli un'opzione (1-9): ").strip()
 
 			if choice == '1':
 				self.menu_clienti()
@@ -413,10 +414,12 @@ class CinemaApp:
 			elif choice == '5':
 				self.menu_recensioni()
 			elif choice == '6':
-				self.menu_reports()
+				self.menu_promozioni()
 			elif choice == '7':
-				self.menu_admin()
+				self.menu_reports()
 			elif choice == '8':
+				self.menu_admin()
+			elif choice == '9':
 				print("\n👋 Arrivederci!")
 				sys.exit(0)
 			else:
@@ -429,11 +432,12 @@ class CinemaApp:
 			print("1. Registra nuovo cliente")
 			print("2. Cerca cliente")
 			print("3. Aggiorna cliente")
-			print("4. Storico acquisti")
-			print("5. Visualizza tutti i clienti")
-			print("6. Torna al menu principale")
+			print("4. Elimina cliente")
+			print("5. Storico acquisti")
+			print("6. Visualizza tutti i clienti")
+			print("7. Torna al menu principale")
 
-			choice = input("\nScegli un'opzione (1-6): ").strip()
+			choice = input("\nScegli un'opzione (1-7): ").strip()
 
 			if choice == '1':
 				self.registra_cliente()
@@ -442,10 +446,12 @@ class CinemaApp:
 			elif choice == '3':
 				self.aggiorna_cliente()
 			elif choice == '4':
-				self.storico_cliente()
+				self.elimina_cliente()
 			elif choice == '5':
-				self.visualizza_tutti_clienti()
+				self.storico_cliente()
 			elif choice == '6':
+				self.visualizza_tutti_clienti()
+			elif choice == '7':
 				break
 			else:
 				print("❌ Opzione non valida!")
@@ -473,39 +479,35 @@ class CinemaApp:
 		print("-" * 35)
 
 		try:
-			# Validazione nome
-			nome = self.valida_stringa_non_vuota(input("Nome: ").strip(), "Nome", 2, 50)
-			if nome is None:
-				return
+			while True:
+				nome = self.valida_stringa_non_vuota(input("Nome: ").strip(), "Nome", 2, 50)
+				if nome is not None:
+					break
 
-			# Validazione cognome
-			cognome = self.valida_stringa_non_vuota(input("Cognome: ").strip(), "Cognome", 2, 50)
-			if cognome is None:
-				return
+			while True:
+				cognome = self.valida_stringa_non_vuota(input("Cognome: ").strip(), "Cognome", 2, 50)
+				if cognome is not None:
+					break
 
-			# Validazione email
-			email = self.valida_stringa_non_vuota(input("Email: ").strip(), "Email", 5, 100)
-			if email is None:
-				return
+			while True:
+				email = self.valida_stringa_non_vuota(input("Email: ").strip(), "Email", 5, 100)
+				if email is not None and self.valida_email(email):
+					break
 
-			if not self.valida_email(email):
-				return
+			while True:
+				telefono_input = input("Telefono (opzionale): ").strip()
+				if not telefono_input or self.valida_telefono(telefono_input):
+					telefono = telefono_input if telefono_input else None
+					break
 
-			# Validazione telefono (opzionale)
-			telefono_input = input("Telefono (opzionale): ").strip()
-			telefono = None
-			if telefono_input:
-				if not self.valida_telefono(telefono_input):
-					return
-				telefono = telefono_input
-
-			# Validazione data di nascita (opzionale)
-			data_nascita_str = input("Data di nascita (YYYY-MM-DD, opzionale): ").strip()
-			data_nascita = None
-			if data_nascita_str:
+			while True:
+				data_nascita_str = input("Data di nascita (YYYY-MM-DD, opzionale): ").strip()
+				if not data_nascita_str:
+					data_nascita = None
+					break
 				data_nascita = self.valida_data(data_nascita_str, "Data di nascita")
-				if data_nascita is None:
-					return
+				if data_nascita is not None:
+					break
 
 			cliente_id = self.cinema_ops.create_cliente(nome, cognome, email, telefono, data_nascita)
 			print(f"✅ Cliente registrato con successo! ID: {cliente_id}")
@@ -536,10 +538,15 @@ class CinemaApp:
 		print("-" * 18)
 
 		try:
-			cliente_id = self.valida_intero(input("ID Cliente: ").strip(), "ID Cliente", 1)
-			if cliente_id is None:
+			# Mostra la lista dei clienti disponibili
+			if not self.mostra_clienti_disponibili():
+				print("❌ Nessun cliente da modificare.")
 				return
 
+			while True:
+				cliente_id = self.valida_intero(input("ID Cliente: ").strip(), "ID Cliente", 1)
+				if cliente_id is not None:
+					break
 			cliente = self.cinema_ops.get_cliente_by_id(cliente_id)
 
 			if not cliente:
@@ -548,10 +555,28 @@ class CinemaApp:
 
 			print(f"\nDati attuali: {cliente['Nome']} {cliente['Cognome']} - {cliente['Email']}")
 
-			nome = input(f"Nuovo nome (attuale: {cliente['Nome']}): ").strip() or cliente['Nome']
-			cognome = input(f"Nuovo cognome (attuale: {cliente['Cognome']}): ").strip() or cliente['Cognome']
-			email = input(f"Nuova email (attuale: {cliente['Email']}): ").strip() or cliente['Email']
-			telefono = input(f"Nuovo telefono (attuale: {cliente['Telefono'] or 'N/A'}): ").strip() or cliente['Telefono']
+			while True:
+				nome = input(f"Nuovo nome (attuale: {cliente['Nome']}): ").strip() or cliente['Nome']
+				nome = self.valida_stringa_non_vuota(nome, "Nome", 2, 50)
+				if nome is not None:
+					break
+
+			while True:
+				cognome = input(f"Nuovo cognome (attuale: {cliente['Cognome']}): ").strip() or cliente['Cognome']
+				cognome = self.valida_stringa_non_vuota(cognome, "Cognome", 2, 50)
+				if cognome is not None:
+					break
+
+			while True:
+				email = input(f"Nuova email (attuale: {cliente['Email']}): ").strip() or cliente['Email']
+				email = self.valida_stringa_non_vuota(email, "Email", 5, 100)
+				if email is not None and self.valida_email(email):
+					break
+
+			while True:
+				telefono = input(f"Nuovo telefono (attuale: {cliente['Telefono'] or 'N/A'}): ").strip() or cliente['Telefono']
+				if not telefono or self.valida_telefono(telefono):
+					break
 
 			if self.cinema_ops.update_cliente(cliente_id, Nome=nome, Cognome=cognome, Email=email, Telefono=telefono):
 				print("✅ Cliente aggiornato con successo!")
@@ -563,15 +588,46 @@ class CinemaApp:
 		except Exception as e:
 			print(f"❌ Errore: {e}")
 
+	def elimina_cliente(self):
+		print("\n🗑️  ELIMINA CLIENTE")
+		print("-" * 18)
+		if not self.mostra_clienti_disponibili():
+			print("❌ Nessun cliente da eliminare.")
+			return
+		while True:
+			val = input("ID Cliente da eliminare (scrivi 'indietro' o 'q' per annullare): ").strip()
+			if val.lower() in ('indietro', 'q'):
+				print("Operazione annullata.")
+				return
+			cliente_id = self.valida_intero(val, "ID Cliente", 1)
+			if cliente_id is not None:
+				cliente = self.cinema_ops.get_cliente_by_id(cliente_id)
+				if cliente:
+					conferma = input(f"Sei sicuro di voler eliminare {cliente['Nome']} {cliente['Cognome']}? (si/no): ").strip().lower()
+					if conferma == 'si':
+						if self.cinema_ops.delete_cliente(cliente_id):
+							print("✅ Cliente eliminato con successo!")
+						else:
+							print("❌ Errore nell'eliminazione!")
+						return
+					else:
+						print("Operazione annullata.")
+						return
+				else:
+					print("❌ Cliente non trovato!")
+
 	def storico_cliente(self):
 		print("\n📋 STORICO ACQUISTI")
 		print("-" * 20)
 
 		try:
-			cliente_id = self.valida_intero(input("ID Cliente: ").strip(), "ID Cliente", 1)
-			if cliente_id is None:
+			if not self.mostra_clienti_disponibili():
+				print("❌ Nessun cliente presente.")
 				return
-
+			while True:
+				cliente_id = self.valida_intero(input("ID Cliente: ").strip(), "ID Cliente", 1)
+				if cliente_id is not None:
+					break
 			storico = self.cinema_ops.get_storico_cliente(cliente_id)
 
 			if storico:
@@ -600,16 +656,17 @@ class CinemaApp:
 
 	def menu_film(self):
 		while True:
-			print("\n🎭 GESTIONE FILM")
+			print("\n🎬 GESTIONE FILM")
 			print("-" * 16)
 			print("1. Aggiungi nuovo film")
 			print("2. Cerca film per genere")
 			print("3. Ricerca film")
 			print("4. Film più popolari")
 			print("5. Visualizza tutti i film")
-			print("6. Torna al menu principale")
+			print("6. Elimina film")
+			print("7. Torna al menu principale")
 
-			choice = input("\nScegli un'opzione (1-6): ").strip()
+			choice = input("\nScegli un'opzione (1-7): ").strip()
 
 			if choice == '1':
 				self.aggiungi_film()
@@ -622,60 +679,69 @@ class CinemaApp:
 			elif choice == '5':
 				self.visualizza_tutti_film()
 			elif choice == '6':
+				self.elimina_film()
+			elif choice == '7':
 				break
 			else:
 				print("❌ Opzione non valida!")
 
-		def aggiungi_film(self):
+	def aggiungi_film(self):
 		print("\n🎬 AGGIUNGI NUOVO FILM")
 		print("-" * 22)
 
 		try:
-			# Input dati del film
-			titolo = self.valida_stringa_non_vuota(input("Titolo del film: ").strip(), "Titolo", 1, 100)
-			if titolo is None:
-				return
+			while True:
+				titolo = self.valida_stringa_non_vuota(input("Titolo del film: ").strip(), "Titolo", 1, 100)
+				if titolo is not None:
+					break
 
-			durata = self.valida_durata_film(input("Durata in minuti: ").strip())
-			if durata is None:
-				return
+			while True:
+				durata = self.valida_durata_film(input("Durata in minuti: ").strip())
+				if durata is not None:
+					break
 
-			genere = self.valida_stringa_non_vuota(input("Genere: ").strip(), "Genere", 2, 50)
-			if genere is None:
-				return
+			while True:
+				genere = self.valida_stringa_non_vuota(input("Genere: ").strip(), "Genere", 2, 50)
+				if genere is not None:
+					break
 
-			classificazione = self.valida_stringa_non_vuota(input("Classificazione (es. T, PG, R): ").strip(), "Classificazione", 1, 10)
-			if classificazione is None:
-				return
+			while True:
+				classificazione = self.valida_stringa_non_vuota(input("Classificazione (es. T, PG, R): ").strip(), "Classificazione", 1, 10)
+				if classificazione is not None:
+					break
 
-			anno_uscita = self.valida_anno(input("Anno di uscita: ").strip())
-			if anno_uscita is None:
-				return
+			while True:
+				anno_uscita = self.valida_anno(input("Anno di uscita: ").strip())
+				if anno_uscita is not None:
+					break
 
-			# Input dati del regista
 			print("\n📽️  DATI DEL REGISTA")
 			print("-" * 18)
 
-			nome_regista = self.valida_stringa_non_vuota(input("Nome regista: ").strip(), "Nome regista", 2, 50)
-			if nome_regista is None:
-				return
+			while True:
+				nome_regista = self.valida_stringa_non_vuota(input("Nome regista: ").strip(), "Nome regista", 2, 50)
+				if nome_regista is not None:
+					break
 
-			cognome_regista = self.valida_stringa_non_vuota(input("Cognome regista: ").strip(), "Cognome regista", 2, 50)
-			if cognome_regista is None:
-				return
+			while True:
+				cognome_regista = self.valida_stringa_non_vuota(input("Cognome regista: ").strip(), "Cognome regista", 2, 50)
+				if cognome_regista is not None:
+					break
 
-			nazionalita = self.valida_stringa_non_vuota(input("Nazionalità: ").strip(), "Nazionalità", 2, 50)
-			if nazionalita is None:
-				return
+			while True:
+				nazionalita = self.valida_stringa_non_vuota(input("Nazionalità: ").strip(), "Nazionalità", 2, 50)
+				if nazionalita is not None:
+					break
 
-			data_nascita_regista_str = input("Data di nascita regista (YYYY-MM-DD, opzionale): ").strip()
-			data_nascita_regista = None
-			if data_nascita_regista_str:
+			while True:
+				data_nascita_regista_str = input("Data di nascita regista (YYYY-MM-DD, opzionale): ").strip()
+				if not data_nascita_regista_str:
+					data_nascita_regista = None
+					break
 				data_nascita_regista = self.valida_data(data_nascita_regista_str, "Data di nascita regista")
-				if data_nascita_regista is None:
-					return
+				if data_nascita_regista is not None:
+					break
 
-			# Crea il regista
 			regista_id = self.cinema_ops.create_regista(
 				nome_regista,
 				cognome_regista,
@@ -683,7 +749,6 @@ class CinemaApp:
 				data_nascita_regista
 			)
 
-			# Crea il film
 			film_id = self.cinema_ops.create_film(
 				titolo,
 				durata,
@@ -716,6 +781,35 @@ class CinemaApp:
 			print(f"\n{tabulate(rows, headers=headers, tablefmt='grid')}")
 		else:
 			print("❌ Nessun film presente.")
+
+	def elimina_film(self):
+		print("\n🗑️  ELIMINA FILM")
+		print("-" * 14)
+		if not self.mostra_film_disponibili():
+			print("❌ Nessun film da eliminare.")
+			return
+		while True:
+			val = input("ID Film da eliminare (scrivi 'indietro' o 'q' per annullare): ").strip()
+			if val.lower() in ('indietro', 'q'):
+				print("Operazione annullata.")
+				return
+			film_id = self.valida_intero(val, "ID Film", 1)
+			if film_id is not None:
+				film = next((f for f in self.cinema_ops.get_all_film() if f['ID_Film'] == film_id), None)
+				if film:
+					conferma = input(f"Sei sicuro di voler eliminare '{film['Titolo']}'? (si/no): ").strip().lower()
+					if conferma == 'si':
+						# Da implementare: funzione delete_film in crud_operations
+						if hasattr(self.cinema_ops, 'delete_film') and self.cinema_ops.delete_film(film_id):
+							print("✅ Film eliminato con successo!")
+						else:
+							print("❌ Errore nell'eliminazione!")
+						return
+					else:
+						print("Operazione annullata.")
+						return
+				else:
+					print("❌ Film non trovato!")
 
 	def cerca_film_genere(self):
 		print("\n🎭 RICERCA PER GENERE")
@@ -769,14 +863,15 @@ class CinemaApp:
 
 	def menu_proiezioni(self):
 		while True:
-			print("\n🎪 GESTIONE PROIEZIONI")
+			print("\n🎞️ GESTIONE PROIEZIONI")
 			print("-" * 22)
 			print("1. Proiezioni per data")
 			print("2. Aggiungi proiezione")
 			print("3. Visualizza tutte le proiezioni")
-			print("4. Torna al menu principale")
+			print("4. Elimina proiezione")
+			print("5. Torna al menu principale")
 
-			choice = input("\nScegli un'opzione (1-4): ").strip()
+			choice = input("\nScegli un'opzione (1-5): ").strip()
 
 			if choice == '1':
 				self.proiezioni_per_data()
@@ -785,6 +880,8 @@ class CinemaApp:
 			elif choice == '3':
 				self.visualizza_tutte_proiezioni()
 			elif choice == '4':
+				self.elimina_proiezione()
+			elif choice == '5':
 				break
 			else:
 				print("❌ Opzione non valida!")
@@ -813,10 +910,10 @@ class CinemaApp:
 		print("-" * 22)
 
 		try:
-			data = self.valida_data(input("Data (YYYY-MM-DD): ").strip(), "Data")
-			if data is None:
-				return
-
+			while True:
+				data = self.valida_data(input("Data (YYYY-MM-DD): ").strip(), "Data")
+				if data is not None:
+					break
 			proiezioni = self.cinema_ops.get_proiezioni_by_data(data)
 
 			if proiezioni:
@@ -849,79 +946,105 @@ class CinemaApp:
 			# Mostra film disponibili
 			if not self.mostra_film_disponibili():
 				return
-
-			film_id = int(input("\nID Film: ").strip())
-
-			# Validazione immediata del film
-			film = self.cinema_ops.get_all_film()
-			film_selezionato = next((f for f in film if f['ID_Film'] == film_id), None)
-			if not film_selezionato:
+			while True:
+				film_id = self.valida_intero(input("\nID Film: ").strip(), "ID Film", 1)
+				film = self.cinema_ops.get_all_film()
+				film_selezionato = next((f for f in film if f['ID_Film'] == film_id), None)
+				if film_selezionato:
+					print(f"✅ Film selezionato: {film_selezionato['Titolo']}")
+					break
 				print("❌ Film non trovato! Verifica l'ID del film.")
-				return
-
-			print(f"✅ Film selezionato: {film_selezionato['Titolo']}")
 
 			# Mostra sale disponibili
 			if not self.mostra_sale_disponibili():
 				return
-
-			sala_id = int(input("\nID Sala: ").strip())
-
-			# Validazione immediata della sala
-			sale = self.cinema_ops.get_all_sale()
-			sala_selezionata = next((s for s in sale if s['ID_Sala'] == sala_id), None)
-			if not sala_selezionata:
+			while True:
+				sala_id = self.valida_intero(input("\nID Sala: ").strip(), "ID Sala", 1)
+				sale = self.cinema_ops.get_all_sale()
+				sala_selezionata = next((s for s in sale if s['ID_Sala'] == sala_id), None)
+				if sala_selezionata:
+					print(f"✅ Sala selezionata: {sala_selezionata['Numero']} (Capienza: {sala_selezionata['Capienza']})")
+					break
 				print("❌ Sala non trovata! Verifica l'ID della sala.")
-				return
 
-			print(f"✅ Sala selezionata: {sala_selezionata['Numero']} (Capienza: {sala_selezionata['Capienza']})")
+			from crud_operations import db_manager
+			while True:
+				while True:
+					data = self.valida_data(input("\nData proiezione (YYYY-MM-DD): ").strip(), "Data proiezione")
+					if data is not None:
+						# Mostra proiezioni già presenti in quella sala e data (come dizionari)
+						with db_manager.get_session() as session:
+							from sqlalchemy import select, join
+							from models import Proiezione, Film
+							j = join(Proiezione, Film, Proiezione.ID_Film == Film.ID_Film)
+							stmt = select(
+								Proiezione.Ora_Inizio,
+								Proiezione.Ora_Fine,
+								Film.Titolo
+							).select_from(j).where(
+								Proiezione.ID_Sala == sala_id,
+								Proiezione.Data == data
+							).order_by(Proiezione.Ora_Inizio)
+							result = session.execute(stmt)
+							proiezioni = [dict(row._mapping) for row in result]
+						if proiezioni:
+							print(f"\nProiezioni già presenti in sala {sala_selezionata['Numero']} il {data}:")
+							headers = ["Ora Inizio", "Ora Fine", "Titolo"]
+							rows = []
+							for p in proiezioni:
+								rows.append([
+									p['Ora_Inizio'].strftime('%H:%M'),
+									p['Ora_Fine'].strftime('%H:%M'),
+									p['Titolo']
+								])
+							from tabulate import tabulate
+							print(tabulate(rows, headers=headers, tablefmt='grid'))
+						else:
+							print(f"\nNessuna proiezione presente in sala {sala_selezionata['Numero']} il {data}.")
+						break
+				while True:
+					ora_inizio = self.valida_ora(input("Ora inizio (HH:MM): ").strip(), "Ora inizio")
+					if ora_inizio is not None:
+						break
+				durata_minuti = film_selezionato['Durata']
+				ora_inizio_dt = datetime.combine(data, ora_inizio)
+				ora_fine_dt = ora_inizio_dt + timedelta(minutes=durata_minuti)
+				ora_fine = ora_fine_dt.time()
+				print(f"⏰ Ora fine calcolata: {ora_fine.strftime('%H:%M')} (durata film: {durata_minuti} minuti)")
+
+				# Controllo sovrapposizione
+				with db_manager.get_session() as session:
+					from crud_operations import CinemaOperations
+					if CinemaOperations()._check_sala_overlap(session, sala_id, data, ora_inizio, ora_fine):
+						print("❌ Esiste già una proiezione sovrapposta in questa sala in quell'orario. Riprova con data/ora/sala diversi.")
+						continue
+					else:
+						break
+				break
 
 			# Mostra operatori disponibili
 			if not self.mostra_operatori_disponibili():
 				return
-
-			operatore_id = int(input("\nID Operatore: ").strip())
-
-			# Validazione immediata dell'operatore
-			operatori = self.cinema_ops.get_all_operatori()
-			operatore_selezionato = next((o for o in operatori if o['ID_Operatore'] == operatore_id), None)
-			if not operatore_selezionato:
+			while True:
+				operatore_id = self.valida_intero(input("\nID Operatore: ").strip(), "ID Operatore", 1)
+				operatori = self.cinema_ops.get_all_operatori()
+				operatore_selezionato = next((o for o in operatori if o['ID_Operatore'] == operatore_id), None)
+				if operatore_selezionato:
+					print(f"✅ Operatore selezionato: {operatore_selezionato['Nome']} {operatore_selezionato['Cognome']}")
+					break
 				print("❌ Operatore non trovato! Verifica l'ID dell'operatore.")
-				return
-
-			print(f"✅ Operatore selezionato: {operatore_selezionato['Nome']} {operatore_selezionato['Cognome']}")
 
 			# Mostra tariffe disponibili
 			if not self.mostra_tariffe_disponibili():
 				return
-
-			tariffa_id = int(input("\nID Tariffa: ").strip())
-
-			# Validazione immediata della tariffa
-			tariffe = self.cinema_ops.get_all_tariffe()
-			tariffa_selezionata = next((t for t in tariffe if t['ID_Tariffa'] == tariffa_id), None)
-			if not tariffa_selezionata:
+			while True:
+				tariffa_id = self.valida_intero(input("\nID Tariffa: ").strip(), "ID Tariffa", 1)
+				tariffe = self.cinema_ops.get_all_tariffe()
+				tariffa_selezionata = next((t for t in tariffe if t['ID_Tariffa'] == tariffa_id), None)
+				if tariffa_selezionata:
+					print(f"✅ Tariffa selezionata: {tariffa_selezionata['Nome_Tariffa']} (€{tariffa_selezionata['Prezzo_Base']})")
+					break
 				print("❌ Tariffa non trovata! Verifica l'ID della tariffa.")
-				return
-
-			print(f"✅ Tariffa selezionata: {tariffa_selezionata['Nome_Tariffa']} (€{tariffa_selezionata['Prezzo_Base']})")
-
-			# Input data e orari
-			data = self.valida_data(input("\nData proiezione (YYYY-MM-DD): ").strip(), "Data proiezione")
-			if data is None:
-				return
-
-			ora_inizio = self.valida_ora(input("Ora inizio (HH:MM): ").strip(), "Ora inizio")
-			if ora_inizio is None:
-				return
-
-			# Calcola l'ora di fine basandosi sulla durata del film
-			durata_minuti = film_selezionato['Durata']
-			ora_inizio_dt = datetime.combine(data, ora_inizio)
-			ora_fine_dt = ora_inizio_dt + timedelta(minutes=durata_minuti)
-			ora_fine = ora_fine_dt.time()
-
-			print(f"⏰ Ora fine calcolata: {ora_fine.strftime('%H:%M')} (durata film: {durata_minuti} minuti)")
 
 			# Crea la proiezione
 			proiezione_id = self.cinema_ops.create_proiezione(data, ora_inizio, ora_fine, film_id, sala_id, operatore_id, tariffa_id)
@@ -932,9 +1055,54 @@ class CinemaApp:
 		except Exception as e:
 			print(f"❌ Errore: {e}")
 
+	def elimina_proiezione(self):
+		print("\n🗑️  ELIMINA PROIEZIONE")
+		print("-" * 20)
+		proiezioni = self.cinema_ops.get_all_proiezioni()
+		if not proiezioni:
+			print("❌ Nessuna proiezione da eliminare.")
+			return
+		headers = ["ID", "Film", "Sala", "Data", "Ora Inizio", "Ora Fine", "Prezzo"]
+		rows = []
+		for p in proiezioni:
+			rows.append([
+				p['ID_Proiezione'],
+				p['Titolo'][:25] + "..." if len(p['Titolo']) > 25 else p['Titolo'],
+				p['Sala'],
+				p['Data'],
+				p['Ora_Inizio'],
+				p['Ora_Fine'],
+				f"€{p['Prezzo_Base']}"
+			])
+		print(f"\nPROIEZIONI DISPONIBILI:")
+		from tabulate import tabulate
+		print(tabulate(rows, headers=headers, tablefmt='grid'))
+		while True:
+			val = input("ID Proiezione da eliminare (scrivi 'indietro' o 'q' per annullare): ").strip()
+			if val.lower() in ('indietro', 'q'):
+				print("Operazione annullata.")
+				return
+			proiezione_id = self.valida_intero(val, "ID Proiezione", 1)
+			if proiezione_id is not None:
+				proiezione = next((p for p in proiezioni if p['ID_Proiezione'] == proiezione_id), None)
+				if proiezione:
+					conferma = input(f"Sei sicuro di voler eliminare la proiezione di '{proiezione['Titolo']}' in sala {proiezione['Sala']} del {proiezione['Data']}? (si/no): ").strip().lower()
+					if conferma == 'si':
+						# Da implementare: funzione delete_proiezione in crud_operations
+						if hasattr(self.cinema_ops, 'delete_proiezione') and self.cinema_ops.delete_proiezione(proiezione_id):
+							print("✅ Proiezione eliminata con successo!")
+						else:
+							print("❌ Errore nell'eliminazione!")
+						return
+					else:
+						print("Operazione annullata.")
+						return
+				else:
+					print("❌ Proiezione non trovata!")
+
 	def menu_biglietti(self):
 		while True:
-			print("\n🎫 GESTIONE BIGLIETTI")
+			print("\n🎟️ GESTIONE BIGLIETTI")
 			print("-" * 21)
 			print("1. Vendi biglietto")
 			print("2. Posti disponibili")
@@ -959,37 +1127,28 @@ class CinemaApp:
 		print("-" * 19)
 
 		try:
-			# Mostra proiezioni disponibili
 			if not self.mostra_proiezioni_disponibili():
 				return
-
-			proiezione_id = int(input("\nID Proiezione: ").strip())
-
-			# Validazione immediata della proiezione
-			proiezioni = self.cinema_ops.get_all_proiezioni()
-			proiezione_selezionata = next((p for p in proiezioni if p['ID_Proiezione'] == proiezione_id), None)
-			if not proiezione_selezionata:
+			while True:
+				proiezione_id = self.valida_intero(input("\nID Proiezione: ").strip(), "ID Proiezione", 1)
+				proiezioni = self.cinema_ops.get_all_proiezioni()
+				proiezione_selezionata = next((p for p in proiezioni if p['ID_Proiezione'] == proiezione_id), None)
+				if proiezione_selezionata:
+					print(f"✅ Proiezione selezionata: {proiezione_selezionata['Titolo']} - Sala {proiezione_selezionata['Sala']}")
+					break
 				print("❌ Proiezione non trovata! Verifica l'ID della proiezione.")
-				return
 
-			print(f"✅ Proiezione selezionata: {proiezione_selezionata['Titolo']} - Sala {proiezione_selezionata['Sala']}")
-
-			# Mostra clienti disponibili
 			if not self.mostra_clienti_disponibili():
 				return
-
-			cliente_id = int(input("\nID Cliente: ").strip())
-
-			# Validazione immediata del cliente
-			clienti = self.cinema_ops.get_all_clienti()
-			cliente_selezionato = next((c for c in clienti if c['ID_Cliente'] == cliente_id), None)
-			if not cliente_selezionato:
+			while True:
+				cliente_id = self.valida_intero(input("\nID Cliente: ").strip(), "ID Cliente", 1)
+				clienti = self.cinema_ops.get_all_clienti()
+				cliente_selezionato = next((c for c in clienti if c['ID_Cliente'] == cliente_id), None)
+				if cliente_selezionato:
+					print(f"✅ Cliente selezionato: {cliente_selezionato['Nome']} {cliente_selezionato['Cognome']}")
+					break
 				print("❌ Cliente non trovato! Verifica l'ID del cliente.")
-				return
 
-			print(f"✅ Cliente selezionato: {cliente_selezionato['Nome']} {cliente_selezionato['Cognome']}")
-
-			# Mostra posti disponibili per la proiezione selezionata
 			posti = self.cinema_ops.get_posti_disponibili(proiezione_id)
 			if posti:
 				headers = ["ID Posto", "Fila", "Numero"]
@@ -1001,16 +1160,13 @@ class CinemaApp:
 			else:
 				print("❌ Nessun posto disponibile per questa proiezione!")
 				return
-
-			posto_id = int(input("\nID Posto: ").strip())
-
-			# Validazione immediata del posto
-			posto_selezionato = next((p for p in posti if p['ID_Posto'] == posto_id), None)
-			if not posto_selezionato:
+			while True:
+				posto_id = self.valida_intero(input("\nID Posto: ").strip(), "ID Posto", 1)
+				posto_selezionato = next((p for p in posti if p['ID_Posto'] == posto_id), None)
+				if posto_selezionato:
+					print(f"✅ Posto selezionato: {posto_selezionato['Fila']}{posto_selezionato['Numero_Posto']}")
+					break
 				print("❌ Posto non trovato o non disponibile! Verifica l'ID del posto.")
-				return
-
-			print(f"✅ Posto selezionato: {posto_selezionato['Fila']}{posto_selezionato['Numero_Posto']}")
 
 			promozione_input = input("ID Promozione (opzionale): ").strip()
 			promozione_id = int(promozione_input) if promozione_input else None
@@ -1029,14 +1185,15 @@ class CinemaApp:
 		print("-" * 20)
 
 		try:
-			# Mostra proiezioni disponibili
 			if not self.mostra_proiezioni_disponibili():
 				return
-
-			proiezione_id = self.valida_intero(input("\nID Proiezione: ").strip(), "ID Proiezione", 1)
-			if proiezione_id is None:
-				return
-
+			while True:
+				proiezione_id = self.valida_intero(input("\nID Proiezione: ").strip(), "ID Proiezione", 1)
+				proiezioni = self.cinema_ops.get_all_proiezioni()
+				proiezione_selezionata = next((p for p in proiezioni if p['ID_Proiezione'] == proiezione_id), None)
+				if proiezione_selezionata:
+					break
+				print("❌ Proiezione non trovata! Verifica l'ID della proiezione.")
 			posti = self.cinema_ops.get_posti_disponibili(proiezione_id)
 
 			if posti:
@@ -1059,25 +1216,49 @@ class CinemaApp:
 		print("-" * 21)
 
 		try:
-			biglietto_id = self.valida_intero(input("ID Biglietto: ").strip(), "ID Biglietto", 1)
-			if biglietto_id is None:
+			# Mostra la lista dei biglietti disponibili (solo ID e stato)
+			# Potresti voler implementare una funzione mostra_biglietti_disponibili()
+			# Qui mostro solo un esempio base:
+			from tabulate import tabulate
+			biglietti = []
+			for cliente in self.cinema_ops.get_all_clienti():
+				storico = self.cinema_ops.get_storico_cliente(cliente['ID_Cliente'])
+				for b in storico:
+					biglietti.append({
+						'ID_Biglietto': b['ID_Biglietto'],
+						'Cliente': f"{cliente['Nome']} {cliente['Cognome']}",
+						'Film': b['Titolo'],
+						'Stato': b['Stato']
+					})
+			if not biglietti:
+				print("❌ Nessun biglietto da aggiornare.")
 				return
+			headers = ["ID Biglietto", "Cliente", "Film", "Stato"]
+			rows = [[b['ID_Biglietto'], b['Cliente'], b['Film'], b['Stato']] for b in biglietti]
+			print(f"\nBIGLIETTI DISPONIBILI:")
+			print(tabulate(rows, headers=headers, tablefmt='grid'))
+
+			while True:
+				biglietto_id = self.valida_intero(input("ID Biglietto: ").strip(), "ID Biglietto", 1)
+				if biglietto_id is not None:
+					break
 			print("\nStati disponibili:")
 			print("1. Valido")
 			print("2. Utilizzato")
 			print("3. Annullato")
 
-			stato_choice = input("Scegli nuovo stato (1-3): ").strip()
-			stati = {'1': 'Valido', '2': 'Utilizzato', '3': 'Annullato'}
-
-			if stato_choice in stati:
-				nuovo_stato = stati[stato_choice]
-				if self.cinema_ops.update_biglietto_stato(biglietto_id, nuovo_stato):
-					print(f"✅ Stato aggiornato a: {nuovo_stato}")
-				else:
-					print("❌ Errore nell'aggiornamento!")
-			else:
+			while True:
+				stato_choice = input("Scegli nuovo stato (1-3): ").strip()
+				stati = {'1': 'Valido', '2': 'Utilizzato', '3': 'Annullato'}
+				if stato_choice in stati:
+					nuovo_stato = stati[stato_choice]
+					break
 				print("❌ Stato non valido!")
+
+			if self.cinema_ops.update_biglietto_stato(biglietto_id, nuovo_stato):
+				print(f"✅ Stato aggiornato a: {nuovo_stato}")
+			else:
+				print("❌ Errore nell'aggiornamento!")
 
 		except ValueError:
 			print("❌ ID non valido!")
@@ -1108,43 +1289,37 @@ class CinemaApp:
 		print("-" * 19)
 
 		try:
-			# Mostra clienti disponibili
 			if not self.mostra_clienti_disponibili():
 				return
-
-			cliente_id = int(input("\nID Cliente: ").strip())
-
-			# Validazione immediata del cliente
-			clienti = self.cinema_ops.get_all_clienti()
-			cliente_selezionato = next((c for c in clienti if c['ID_Cliente'] == cliente_id), None)
-			if not cliente_selezionato:
+			while True:
+				cliente_id = self.valida_intero(input("\nID Cliente: ").strip(), "ID Cliente", 1)
+				clienti = self.cinema_ops.get_all_clienti()
+				cliente_selezionato = next((c for c in clienti if c['ID_Cliente'] == cliente_id), None)
+				if cliente_selezionato:
+					print(f"✅ Cliente selezionato: {cliente_selezionato['Nome']} {cliente_selezionato['Cognome']}")
+					break
 				print("❌ Cliente non trovato! Verifica l'ID del cliente.")
-				return
 
-			print(f"✅ Cliente selezionato: {cliente_selezionato['Nome']} {cliente_selezionato['Cognome']}")
-
-			# Mostra film disponibili
 			if not self.mostra_film_disponibili():
 				return
-
-			film_id = int(input("\nID Film: ").strip())
-
-			# Validazione immediata del film
-			film = self.cinema_ops.get_all_film()
-			film_selezionato = next((f for f in film if f['ID_Film'] == film_id), None)
-			if not film_selezionato:
+			while True:
+				film_id = self.valida_intero(input("\nID Film: ").strip(), "ID Film", 1)
+				film = self.cinema_ops.get_all_film()
+				film_selezionato = next((f for f in film if f['ID_Film'] == film_id), None)
+				if film_selezionato:
+					print(f"✅ Film selezionato: {film_selezionato['Titolo']}")
+					break
 				print("❌ Film non trovato! Verifica l'ID del film.")
-				return
 
-			print(f"✅ Film selezionato: {film_selezionato['Titolo']}")
+			while True:
+				valutazione = self.valida_valutazione(input("Valutazione (1-10): ").strip())
+				if valutazione is not None:
+					break
 
-			valutazione = self.valida_valutazione(input("Valutazione (1-10): ").strip())
-			if valutazione is None:
-				return
-
-			commento = self.valida_stringa_non_vuota(input("Commento: ").strip(), "Commento", 5, 500)
-			if commento is None:
-				return
+			while True:
+				commento = self.valida_stringa_non_vuota(input("Commento: ").strip(), "Commento", 5, 500)
+				if commento is not None:
+					break
 
 			recensione_id = self.cinema_ops.create_recensione(valutazione, commento, cliente_id, film_id)
 			print(f"✅ Recensione aggiunta! ID: {recensione_id}")
@@ -1159,14 +1334,16 @@ class CinemaApp:
 		print("-" * 17)
 
 		try:
-			# Mostra film disponibili
 			if not self.mostra_film_disponibili():
+				print("❌ Nessun film disponibile.")
 				return
-
-			film_id = self.valida_intero(input("\nID Film: ").strip(), "ID Film", 1)
-			if film_id is None:
-				return
-
+			while True:
+				film_id = self.valida_intero(input("\nID Film: ").strip(), "ID Film", 1)
+				film = self.cinema_ops.get_all_film()
+				film_selezionato = next((f for f in film if f['ID_Film'] == film_id), None)
+				if film_selezionato:
+					break
+				print("❌ Film non trovato! Verifica l'ID del film.")
 			recensioni = self.cinema_ops.get_recensioni_film(film_id)
 
 			if recensioni and recensioni.get('Numero_Recensioni', 0) > 0:
@@ -1210,14 +1387,14 @@ class CinemaApp:
 		print("-" * 21)
 
 		try:
-			data_inizio = self.valida_data(input("Data inizio (YYYY-MM-DD): ").strip(), "Data inizio")
-			if data_inizio is None:
-				return
-
-			data_fine = self.valida_data(input("Data fine (YYYY-MM-DD): ").strip(), "Data fine")
-			if data_fine is None:
-				return
-
+			while True:
+				data_inizio = self.valida_data(input("Data inizio (YYYY-MM-DD): ").strip(), "Data inizio")
+				if data_inizio is not None:
+					break
+			while True:
+				data_fine = self.valida_data(input("Data fine (YYYY-MM-DD): ").strip(), "Data fine")
+				if data_fine is not None:
+					break
 			if data_inizio > data_fine:
 				print("❌ La data di inizio deve essere precedente alla data di fine!")
 				return
@@ -1256,15 +1433,18 @@ class CinemaApp:
 			print("-" * 17)
 			print("1. Reset database")
 			print("2. Test connessione")
-			print("3. Torna al menu principale")
+			print("3. Elimina promozione")
+			print("4. Torna al menu principale")
 
-			choice = input("\nScegli un'opzione (1-3): ").strip()
+			choice = input("\nScegli un'opzione (1-4): ").strip()
 
 			if choice == '1':
 				self.reset_db()
 			elif choice == '2':
 				self.test_connessione()
 			elif choice == '3':
+				self.elimina_promozione()
+			elif choice == '4':
 				break
 			else:
 				print("❌ Opzione non valida!")
@@ -1293,6 +1473,144 @@ class CinemaApp:
 			print("✅ Connessione al database attiva!")
 		except Exception as e:
 			print(f"❌ Errore di connessione: {e}")
+
+	def elimina_promozione(self):
+		print("\n🗑️  ELIMINA PROMOZIONE")
+		print("-" * 20)
+		if not hasattr(self.cinema_ops, 'get_all_promozioni'):
+			print("❌ Funzione get_all_promozioni non implementata.")
+			return
+		promozioni = self.cinema_ops.get_all_promozioni()
+		if not promozioni:
+			print("❌ Nessuna promozione da eliminare.")
+			return
+		headers = ["ID", "Nome", "Sconto", "Data Inizio", "Data Fine"]
+		rows = []
+		for p in promozioni:
+			rows.append([
+				p['ID_Promozione'],
+				p['Nome'],
+				f"{p['Percentuale_Sconto']}%",
+				p['Data_Inizio'],
+				p['Data_Fine']
+			])
+		from tabulate import tabulate
+		print(f"\nPROMOZIONI DISPONIBILI:")
+		print(tabulate(rows, headers=headers, tablefmt='grid'))
+		while True:
+			val = input("ID Promozione da eliminare (scrivi 'indietro' o 'q' per annullare): ").strip()
+			if val.lower() in ('indietro', 'q'):
+				print("Operazione annullata.")
+				return
+			promo_id = self.valida_intero(val, "ID Promozione", 1)
+			if promo_id is not None:
+				promo = next((p for p in promozioni if p['ID_Promozione'] == promo_id), None)
+				if promo:
+					conferma = input(f"Sei sicuro di voler eliminare la promozione '{promo['Nome']}'? (si/no): ").strip().lower()
+					if conferma == 'si':
+						# Da implementare: funzione delete_promozione in crud_operations
+						if hasattr(self.cinema_ops, 'delete_promozione') and self.cinema_ops.delete_promozione(promo_id):
+							print("✅ Promozione eliminata con successo!")
+						else:
+							print("❌ Errore nell'eliminazione!")
+						return
+					else:
+						print("Operazione annullata.")
+						return
+				else:
+					print("❌ Promozione non trovata!")
+
+	def menu_promozioni(self):
+		while True:
+			print("\n🏷️ GESTIONE PROMOZIONI")
+			print("-" * 22)
+			print("1. Visualizza tutte le promozioni")
+			print("2. Aggiungi promozione")
+			print("3. Elimina promozione")
+			print("4. Torna al menu principale")
+
+			choice = input("\nScegli un'opzione (1-4): ").strip()
+
+			if choice == '1':
+				self.visualizza_tutte_promozioni()
+			elif choice == '2':
+				self.aggiungi_promozione()
+			elif choice == '3':
+				self.elimina_promozione()
+			elif choice == '4':
+				break
+			else:
+				print("❌ Opzione non valida!")
+
+	def visualizza_tutte_promozioni(self):
+		print("\n🏷️ PROMOZIONI DISPONIBILI")
+		print("-" * 22)
+		if not hasattr(self.cinema_ops, 'get_all_promozioni'):
+			print("❌ Funzione get_all_promozioni non implementata.")
+			return
+		promozioni = self.cinema_ops.get_all_promozioni()
+		if not promozioni:
+			print("❌ Nessuna promozione presente.")
+			return
+		headers = ["ID", "Nome", "Sconto", "Data Inizio", "Data Fine"]
+		rows = []
+		for p in promozioni:
+			rows.append([
+				p['ID_Promozione'],
+				p['Nome'],
+				f"{p['Percentuale_Sconto']}%",
+				p['Data_Inizio'],
+				p['Data_Fine']
+			])
+		from tabulate import tabulate
+		print(tabulate(rows, headers=headers, tablefmt='grid'))
+
+	def aggiungi_promozione(self):
+		print("\n➕ AGGIUNGI PROMOZIONE")
+		print("-" * 22)
+		try:
+			# Mostra tipi promozione disponibili
+			if not hasattr(self.cinema_ops, 'get_all_tipo_promozione'):
+				print("❌ Funzione get_all_tipo_promozione non implementata.")
+				return
+			tipi = self.cinema_ops.get_all_tipo_promozione()
+			if not tipi:
+				print("❌ Nessun tipo promozione disponibile. Creane uno prima.")
+				return
+			headers = ["ID", "Nome", "Descrizione"]
+			rows = []
+			for t in tipi:
+				rows.append([t['ID_Tipo_Promozione'], t['Nome_Tipo'], t['Descrizione_Tipo']])
+			from tabulate import tabulate
+			print("\nTIPI PROMOZIONE DISPONIBILI:")
+			print(tabulate(rows, headers=headers, tablefmt='grid'))
+			while True:
+				tipo_id = self.valida_intero(input("ID Tipo Promozione: ").strip(), "ID Tipo Promozione", 1)
+				tipo = next((t for t in tipi if t['ID_Tipo_Promozione'] == tipo_id), None)
+				if tipo:
+					break
+				print("❌ Tipo promozione non trovato!")
+			while True:
+				nome = self.valida_stringa_non_vuota(input("Nome promozione: ").strip(), "Nome promozione", 2, 100)
+				if nome is not None:
+					break
+			while True:
+				percentuale = self.valida_percentuale_sconto(input("Percentuale sconto (0-100): ").strip())
+				if percentuale is not None:
+					break
+			while True:
+				data_inizio = self.valida_data(input("Data inizio (YYYY-MM-DD): ").strip(), "Data inizio")
+				if data_inizio is not None:
+					break
+			while True:
+				data_fine = self.valida_data(input("Data fine (YYYY-MM-DD): ").strip(), "Data fine")
+				if data_fine is not None and data_fine >= data_inizio:
+					break
+				print("❌ Data fine non valida!")
+			promo_id = self.cinema_ops.create_promozione(nome, tipo_id, percentuale, data_inizio, data_fine)
+			print(f"✅ Promozione aggiunta con successo! ID: {promo_id}")
+		except Exception as e:
+			print(f"❌ Errore: {e}")
 
 def main():
 	try:
